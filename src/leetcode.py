@@ -16,6 +16,8 @@ CSCI148: Graph Algorithms will teach you how to solve problems like this
 without needing any hints.
 '''
 
+from functools import cmp_to_key
+
 
 def merge_intervals(intervals):
     '''
@@ -40,8 +42,13 @@ def merge_intervals(intervals):
     enough.  Whenever the next interval starts at or before the end of
     the last merged one, extend it; otherwise start a new interval.
     '''
-    def key(interval):
-        return interval[0]
+    result = []
+    for start, end in sorted(intervals, key=lambda iv: iv[0]):
+        if result and start <= result[-1][1]:
+            result[-1][1] = max(result[-1][1], end)
+        else:
+            result.append([start, end])
+    return result
 
 
 def rank_teams(votes):
@@ -74,11 +81,18 @@ def rank_teams(votes):
     '''
     # counts[team][i] is the number of voters who ranked `team`
     # in position i -- fill this in before sorting.
-    counts = {}
+    num_positions = len(votes[0])
+    teams = sorted(votes[0])
+    counts = {team: [0] * num_positions for team in teams}
+    for vote in votes:
+        for i, team in enumerate(vote):
+            counts[team][i] += 1
 
     def key(team):
         # negated counts sort descending; the letter breaks ties
         return tuple(-n for n in counts[team]) + (team,)
+
+    return ''.join(sorted(teams, key=key))
 
 
 def largest_number(nums):
@@ -108,6 +122,11 @@ def largest_number(nums):
             return -1
         return 1 if b + a > a + b else 0
 
+    strs = [str(n) for n in nums]
+    strs.sort(key=cmp_to_key(cmp))
+    result = ''.join(strs).lstrip('0')
+    return result or '0'
+
 
 def two_city_sched_cost(costs):
     '''
@@ -134,5 +153,9 @@ def two_city_sched_cost(costs):
     so sort by that difference and move the n smallest.
 
     '''
-    def key(cost):
-        return cost[0] - cost[1]
+    n = len(costs) // 2
+    ordered = sorted(costs, key=lambda c: c[0] - c[1])
+    total = 0
+    for i, (a, b) in enumerate(ordered):
+        total += a if i < n else b
+    return total
